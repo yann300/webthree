@@ -40,6 +40,7 @@
 #include <libethcore/ICAP.h>
 #include <libethereum/All.h>
 #include <libethereum/BlockChainSync.h>
+#include <ethkey/KeyAux.h>
 #include <libethashseal/EthashClient.h>
 #include <libethashseal/GenesisInfo.h>
 #include <libwebthree/WebThree.h>
@@ -426,13 +427,19 @@ int main(int argc, char** argv)
 	}
 
 	MinerCLI m(MinerCLI::OperationMode::None);
+	KeyCLI keym(KeyCLI::OperationMode::ListBare);
 
+	bool accountMode = (string)argv[1] == "wallet" || (string)argv[1] == "account";
+	bool minerMode = (string)argv[1] == "miner";
 	string configJSON;
 	string genesisJSON;
 	for (int i = 1; i < argc; ++i)
 	{
 		string arg = argv[i];
-		if (m.interpretOption(i, argc, argv)) {}
+		if (accountMode)
+			keym.interpretOption(i, argc, argv);
+		else if (minerMode)
+			m.interpretOption(i, argc, argv);
 		else if (arg == "--url" && i + 1 < argc)
 			remoteURL = argv[++i];
 		else if (arg == "--session-key" && i + 1 < argc)
@@ -893,6 +900,17 @@ int main(int argc, char** argv)
 		}
 	}
 
+	if (minerMode)
+	{
+		m.execute();
+		return 0;
+	}
+	else if (accountMode)
+	{
+		keym.execute();
+		return 0;
+	}
+
 	if (mode == OperationMode::Attach)
 	{
 		if (remoteURL.find_last_of("-1") == remoteURL.size() - 1)
@@ -928,8 +946,6 @@ int main(int argc, char** argv)
 
 	if (g_logVerbosity > 0)
 		cout << EthGrayBold "(++)Ethereum" EthReset << endl;
-
-	m.execute();
 
 	KeyManager keyManager;
 	for (auto const& s: passwordsToNote)
