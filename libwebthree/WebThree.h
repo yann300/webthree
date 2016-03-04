@@ -86,6 +86,9 @@ public:
 
 	virtual p2p::NodeID id() const = 0;
 
+	/// Get network id
+	virtual u256 networkId() const = 0;
+
 	/// Gets the nodes.
 	virtual p2p::Peers nodes() const = 0;
 
@@ -142,7 +145,7 @@ public:
 
 	// Misc stuff:
 
-	static std::string composeClientVersion(std::string const& _client, std::string const& _name);
+	static std::string composeClientVersion(std::string const& _client);
 	std::string const& clientVersion() const { return m_clientVersion; }
 	void setClientVersion(std::string const& _name) { m_clientVersion = _name; }
 
@@ -193,6 +196,8 @@ public:
 	p2p::NodeInfo nodeInfo() const override { return m_net.nodeInfo(); }
 
 	p2p::NodeID id() const override { return m_net.id(); }
+
+	u256 networkId() const override { return m_ethereum.get()->networkId(); }
 
 	std::string enode() const override { return m_net.enode(); }
 

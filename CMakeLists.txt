@@ -10,7 +10,7 @@ include(EthPolicy)
 eth_policy()
 
 # project name and version should be set after cmake_policy CMP0048
-project(webthree VERSION "1.1.4")
+project(webthree VERSION "1.2.1")
 
 # Let's find our dependencies
 include(EthDependencies)
@@ -38,8 +38,6 @@ add_subdirectory(libjsconsole)
 
 # executables
 add_subdirectory(eth)
-add_subdirectory(exp)
-add_subdirectory(flu)
 
 # test stuff
 add_subdirectory(test)

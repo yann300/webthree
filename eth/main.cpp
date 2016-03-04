@@ -201,7 +201,7 @@ void help()
 		<< "    --dont-check  Prevent checking some block aspects. Faster importing, but to apply only when the data is known to be valid." << endl
 		<< endl
 		<< "General Options:" << endl
-		<< "    -d,--db-path <path>  Load database from path (default: " << getDataDir() << ")." << endl
+		<< "    -d,--db-path,--datadir <path>  Load database from path (default: " << getDataDir() << ")." << endl
 #if ETH_EVMJIT || !ETH_TRUE
 		<< "    --vm <vm-kind>  Select VM; options are: interpreter, jit or smart (default: interpreter)." << endl
 #endif
@@ -331,7 +331,6 @@ int main(int argc, char** argv)
 
 	/// Operating mode.
 	OperationMode mode = OperationMode::Node;
-	string dbPath;
 //	unsigned prime = 0;
 //	bool yesIReallyKnowWhatImDoing = false;
 	strings scripts;
@@ -614,8 +613,8 @@ int main(int argc, char** argv)
 			structuredLogging = true;
 			structuredLoggingURL = argv[++i];
 		}
-		else if ((arg == "-d" || arg == "--path" || arg == "--db-path") && i + 1 < argc)
-			dbPath = argv[++i];
+		else if ((arg == "-d" || arg == "--path" || arg == "--db-path" || arg == "--datadir") && i + 1 < argc)
+			setDataDir(argv[++i]);
 		else if ((arg == "--genesis-json" || arg == "--genesis") && i + 1 < argc)
 		{
 			try
@@ -1014,11 +1013,11 @@ int main(int argc, char** argv)
 	netPrefs.discovery = (privateChain.empty() && !disableDiscovery) || enableDiscovery;
 	netPrefs.pin = (pinning || !privateChain.empty()) && !noPinning;
 
-	auto nodesState = contents((dbPath.size() ? dbPath : getDataDir()) + "/network.rlp");
+	auto nodesState = contents(getDataDir() + "/network.rlp");
 	auto caps = useWhisper ? set<string>{"eth", "shh"} : set<string>{"eth"};
 	dev::WebThreeDirect web3(
-		WebThreeDirect::composeClientVersion("++eth", clientName),
-		dbPath,
+		WebThreeDirect::composeClientVersion("eth"),
+		getDataDir(),
 		chainParams,
 		withExisting,
 		nodeMode == NodeMode::Full ? caps : set<string>(),
@@ -1185,7 +1184,7 @@ int main(int argc, char** argv)
 //	std::shared_ptr<eth::BasicGasPricer> gasPricer = make_shared<eth::BasicGasPricer>(u256(double(ether / 1000) / etherPrice), u256(blockFees * 1000));
 	std::shared_ptr<eth::TrivialGasPricer> gasPricer = make_shared<eth::TrivialGasPricer>(askPrice, bidPrice);
 	eth::Client* c = nodeMode == NodeMode::Full ? web3.ethereum() : nullptr;
-	StructuredLogger::starting(WebThreeDirect::composeClientVersion("++eth", clientName), dev::Version);
+	StructuredLogger::starting(WebThreeDirect::composeClientVersion("eth"), dev::Version);
 	if (c)
 	{
 		c->setGasPricer(gasPricer);
@@ -1205,7 +1204,7 @@ int main(int argc, char** argv)
 	cout << "Mining Beneficiary: " << renderFullAddress(author) << endl;
 	cout << "Foundation: " << renderFullAddress(Address("de0b295669a9fd93d5f28d9ec85e40f4cb697bae")) << endl;
 
-	if (bootstrap || !remoteHost.empty() || disableDiscovery)
+	if (bootstrap || !remoteHost.empty() || enableDiscovery)
 	{
 		web3.startNetwork();
 		cout << "Node ID: " << web3.enode() << endl;
@@ -1380,9 +1379,9 @@ int main(int argc, char** argv)
 		jsonrpcIpcServer->StopListening();
 #endif
 
-	StructuredLogger::stopping(WebThreeDirect::composeClientVersion("++eth", clientName), dev::Version);
+	StructuredLogger::stopping(WebThreeDirect::composeClientVersion("eth"), dev::Version);
 	auto netData = web3.saveNetwork();
 	if (!netData.empty())
-		writeFile((dbPath.size() ? dbPath : getDataDir()) + "/network.rlp", netData);
+		writeFile(getDataDir() + "/network.rlp", netData);
 	return 0;
 }
